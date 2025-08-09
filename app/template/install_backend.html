@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Instalador BackEnd - e-Flow</title>
+</head>
+<body>
+    <h2>Instalador de BackEnd e-Flow</h2>
+
+    <form action="/install/backend" method="post">
+        <label>Servidor SQL:</label><br>
+        <input type="text" name="sql_server" placeholder="localhost\\SQLEXPRESS" required><br><br>
+
+        <label>Nombre de la Base de Datos:</label><br>
+        <input type="text" name="db_name" placeholder="STE" required><br><br>
+
+        <label>Usuario SQL:</label><br>
+        <input type="text" name="user" placeholder="sa" required><br><br>
+
+        <label>Contraseña SQL:</label><br>
+        <input type="password" name="password" required><br><br>
+
+        <label>Ruta de Scripts (001, 002 y .bat):</label><br>
+        <input type="text" name="target_path" placeholder="C:\Installers\eFlow\BackEnd\scripts" required><br><br>
+
+        <button type="submit">Iniciar Instalación BackEnd</button>
+    </form>
+</body>
+</html>

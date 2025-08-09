@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Instalador MiddleWare - e-Flow</title>
+</head>
+<body>
+    <h2>Instalador de MiddleWare e-Flow</h2>
+
+    <form action="/install/middleware" method="post">
+        <label>Ruta de instalación (Middleware):</label><br>
+        <input type="text" name="target_path" placeholder="C:\Sidesys\Middleware" required><br><br>
+
+        <label>Puerto del Servicio App:</label><br>
+        <input type="text" name="puerto_app" value="10500"><br><br>
+
+        <label>Puerto del Nodo:</label><br>
+        <input type="text" name="puerto_nodo" value="10501"><br><br>
+
+        <label>Servidor SQL:</label><br>
+        <input type="text" name="sql_server" placeholder="localhost\\SQLEXPRESS" required><br><br>
+
+        <label>Usuario SQL:</label><br>
+        <input type="text" name="user" placeholder="sa" required><br><br>
+
+        <label>Contraseña SQL:</label><br>
+        <input type="password" name="password" required><br><br>
+
+        <button type="submit">Iniciar Instalación MiddleWare</button>
+    </form>
+</body>
+</html>

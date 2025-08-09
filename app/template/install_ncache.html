@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Instalador NCache - e-Flow</title>
+</head>
+<body>
+    <h2>Instalador de NCache - e-Flow</h2>
+
+    <form action="/install/ncache" method="post">
+        <label>Ruta del instalador (.msi):</label><br>
+        <input type="text" name="ncache_msi" placeholder="C:\Installers\NCache\ncache.opensource.clr40.x64.msi" required><br><br>
+
+        <label>Nombre o IP del servidor:</label><br>
+        <input type="text" name="server_name" placeholder="localhost" required><br><br>
+
+        <label>Puerto del servidor NCache:</label><br>
+        <input type="text" name="server_port" value="9800"><br><br>
+
+        <label>Nombre del cache:</label><br>
+        <input type="text" name="cache_name" value="myCache"><br><br>
+
+        <label>Ruta FrontEnd:</label><br>
+        <input type="text" name="frontend_path" placeholder="C:\Sidesys\FrontEnd" required><br><br>
+
+        <label>Ruta MiddleWare:</label><br>
+        <input type="text" name="middleware_path" placeholder="C:\Sidesys\Middleware" required><br><br>
+
+        <button type="submit">Iniciar Instalación NCache</button>
+    </form>
+</body>
+</html>

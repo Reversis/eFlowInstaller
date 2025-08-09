@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Instalación FrontEnd - e-Flow</title>
+</head>
+<body>
+    <h2>Instalador de FrontEnd e-Flow</h2>
+
+    <form action="/install/frontend" method="post">
+        <label>Ruta de instalación (FrontEnd):</label><br>
+        <input type="text" name="target_path" placeholder="C:\Sidesys\FrontEnd" required><br><br>
+
+        <label>IP del Middleware:</label><br>
+        <input type="text" name="middleware_ip" placeholder="192.168.1.10" required><br><br>
+
+        <label>IP del Nodo:</label><br>
+        <input type="text" name="nodo_ip" placeholder="192.168.1.11" required><br><br>
+
+        <label>Puerto del Middleware (App):</label><br>
+        <input type="text" name="puerto_app" value="10500"><br><br>
+
+        <label>Puerto del Nodo:</label><br>
+        <input type="text" name="puerto_nodo" value="10501"><br><br>
+
+        <label>Nombre del sitio IIS:</label><br>
+        <input type="text" name="site_name" value="STE"><br><br>
+
+        <button type="submit">Iniciar Instalación FrontEnd</button>
+    </form>
+</body>
+</html>

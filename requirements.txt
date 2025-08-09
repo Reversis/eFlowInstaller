@@ -1,0 +1,4 @@
+flask
+pyodbc
+psutil
+pywin32
