@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Selecciona producto · Instalador</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root{
+      --brand:#3b82f6; --brand-dark:#2563eb; --brand2:#60a5fa;
+      --bg:#f5f7fb; --card:#ffffff; --text:#0f172a; --muted:#64748b;
+      --shadow:0 14px 40px rgba(15,23,42,.12);
+      --shadow-soft:0 8px 24px rgba(15,23,42,.08);
+      --container:1100px; --radius:16px;
+      --media-h:220px;       /* <- altura consistente de la imagen */
+      --card-h: 380px;       /* <- altura total de la tarjeta para que ambas sean iguales */
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0; font-family:"Segoe UI", system-ui, -apple-system, Roboto, Arial, sans-serif;
+      background:var(--bg); color:var(--text);
+      display:flex; flex-direction:column; min-height:100vh;
+    }
+
+    header{ background:#fff; border-bottom:3px solid var(--brand); }
+    .wrap{
+      max-width:var(--container); margin:0 auto; padding:12px 20px;
+      display:flex; align-items:center; gap:14px;
+    }
+    header img{ height:45px; width:auto; display:block; }
+    .title{ margin:0; font-size:18px; color:var(--brand); font-weight:700; }
+    .subtitle{ margin:2px 0 0; font-size:12px; color:var(--muted); }
+
+    main{ flex:1; }
+    .main-wrap{ max-width:var(--container); margin:0 auto; padding:28px 20px 40px; }
+    h1{ margin:0 0 6px; color:var(--text); font-size:22px; }
+    .note{ margin:0 0 22px; color:var(--muted); font-size:13px; }
+
+    .grid{
+      display:grid; gap:20px;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      align-items:stretch;
+    }
+
+    .card{
+      height: var(--card-h);                       /* <- misma altura para ambas */
+      background:var(--card);
+      border:1px solid rgba(15,23,42,.06);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow-soft);
+      overflow:hidden;
+      transition: transform .18s ease, box-shadow .2s ease, border-color .2s ease;
+      display:flex; flex-direction:column;
+    }
+    .card:hover{ transform: translateY(-4px); box-shadow: var(--shadow); border-color: rgba(59,130,246,.22); }
+
+    .media{
+      position:relative;
+      height: var(--media-h);                      /* <- “marco” de la imagen */
+      background:linear-gradient(180deg, #fff, #f2f6ff);
+      display:flex; align-items:center; justify-content:center;
+      padding: 10px;
+    }
+    .media img{
+      max-width:100%; max-height:100%;
+      width:auto; height:auto; object-fit:contain; display:block;
+      transition: transform .3s ease, filter .3s ease;
+      transform: translateZ(0);
+    }
+    .card:hover .media img{ transform: scale(1.02); }
+
+    .badge{
+      position:absolute; top:12px; left:12px;
+      background:rgba(59,130,246,.95); color:#fff; font-size:12px; font-weight:700;
+      padding:6px 10px; border-radius:999px; letter-spacing:.2px;
+      box-shadow:0 6px 16px rgba(59,130,246,.35);
+      display:flex; align-items:center; gap:8px;
+    }
+
+    .body{
+      flex:1;                                      /* <- rellena para igualar alturas */
+      padding:16px; display:flex; flex-direction:column; gap:10px;
+    }
+    .card h3{ margin:0; font-size:18px; color:#0b1220; }
+    .desc{ margin:0; font-size:13px; color:var(--muted); }
+    .actions{ margin-top:auto; display:flex; gap:10px; }
+
+    .btn{
+      appearance:none; border:none; cursor:pointer; text-decoration:none;
+      display:inline-flex; align-items:center; gap:10px;
+      background:var(--brand); color:#fff; padding:12px 14px;
+      border-radius:12px; font-weight:600; font-size:14px;
+      box-shadow:0 8px 22px rgba(59,130,246,.28);
+      transition: background .15s ease, transform .12s ease, box-shadow .2s ease;
+    }
+    .btn:hover{ background:var(--brand-dark); transform: translateY(-1px); box-shadow:0 12px 30px rgba(59,130,246,.32); }
+    .btn.gray{ background:#6b7280; box-shadow:0 8px 22px rgba(0,0,0,.18); }
+    .btn.gray:hover{ background:#565c66; box-shadow:0 12px 30px rgba(0,0,0,.24); }
+
+    footer{ background:#fff; border-top:1px solid rgba(15,23,42,.06); }
+    .footer-wrap{
+      max-width:var(--container); margin:0 auto; padding:14px 20px;
+      text-align:center; color:#777; font-size:13px;
+    }
+    .footer-wrap b{ color:#0b1220; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <img src="{{ url_for('static', filename='logo_sidesys.png') }}" alt="SIDESYS" />
+      <div>
+        <p class="title">Selecciona el producto a instalar</p>
+        <p class="subtitle">Valida requisitos y continúa con el instalador</p>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="main-wrap">
+      <h1>Productos disponibles</h1>
+      <p class="note">Por ahora solo <b>e-Flow</b> está habilitado. <b>Citas</b> se encuentra en construcción.</p>
+
+      <div class="grid">
+        <!-- Citas -->
+        <article class="card">
+          <div class="media">
+            <img src="{{ url_for('static', filename='citas.png') }}" alt="Citas" />
+            <div class="badge" title="En construcción">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                <path d="M2 21l6-6" stroke="white" stroke-width="2" stroke-linecap="round"/>
+                <path d="M8 15l3 3" stroke="white" stroke-width="2" stroke-linecap="round"/>
+                <path d="M13 8l3-3 3 3-3 3" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M12 9l3 3" stroke="white" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+              En construcción
+            </div>
+          </div>
+          <div class="body">
+            <h3>Citas</h3>
+            <p class="desc">Módulo de gestión de turnos. Disponible pronto.</p>
+            <div class="actions">
+              <a class="btn gray" href="{{ url_for('main.citas_soon') }}">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                  <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12Z" stroke="white" stroke-width="2"/>
+                  <circle cx="12" cy="12" r="3" fill="white"/>
+                </svg>
+                Ver estado
+              </a>
+            </div>
+          </div>
+        </article>
+
+        <!-- e-Flow -->
+        <article class="card">
+          <div class="media">
+            <img src="{{ url_for('static', filename='eflow.png') }}" alt="e-Flow" />
+            <div class="badge" title="Requisitos previos">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                <path d="M20 6L9 17l-5-5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              Validación previa
+            </div>
+          </div>
+          <div class="body">
+            <h3>e-Flow</h3>
+            <p class="desc">Valida requisitos mínimos y continúa con el instalador.</p>
+            <div class="actions">
+              <a class="btn" href="{{ url_for('main.precheck_view', product='eflow') }}">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                  <path d="M8 5v14l11-7-11-7Z" fill="white"/>
+                </svg>
+                Validar e instalar
+              </a>
+            </div>
+          </div>
+        </article>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <div class="footer-wrap">
+      Desarrollado por <b>Pablo Ferreras</b> · SIDESYS IT SOLUTIONS
+    </div>
+  </footer>
+</body>
+</html>

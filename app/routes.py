@@ -1,14 +1,15 @@
-from flask import Blueprint, render_template, request
+from flask import Blueprint, render_template, request, jsonify, redirect, url_for
 from app.installer import backend, frontend, middleware, ncache
+from app.installer.precheck import run_prereq_check
 
 main = Blueprint('main', __name__)
 
 # ---------------------------
-# Página principal (Dashboard)
+# Dashboard (muestra selector.html)
 # ---------------------------
 @main.route('/')
-def dashboard():
-    return render_template('dashboard.html')
+def selector():
+    return render_template('selector.html')
 
 # ---------------------------
 # BackEnd
@@ -57,3 +58,44 @@ def ncache_form():
 def install_ncache():
     result = ncache.run_ncache_installation(request.form)
     return f"<pre>{result['output']}</pre><br><a href='/{result['log_file']}'>Descargar Log</a>"
+
+# ---------------------------
+# Selector de producto
+# ---------------------------
+@main.route('/dashboard')
+def dashboard():
+    return render_template('dashboard.html')
+
+# ---------------------------
+# Página “en construcción” para Citas
+# (cambia el nombre si tu template real es en_construccion.html)
+# ---------------------------
+@main.route('/citas')
+def citas_soon():
+    return render_template('construccion.html')
+
+# ---------------------------
+# Pre-check de requisitos
+# ---------------------------
+@main.route('/precheck/<product>')
+def precheck_view(product):
+    if product.lower() == 'citas':
+        return redirect(url_for('main.citas_soon'))
+    return render_template('precheck.html', product=product)
+
+@main.route('/api/precheck')
+def api_precheck():
+    product = request.args.get('product', 'eflow')
+    result = run_prereq_check(product)
+    return jsonify(result)
+
+# ---------------------------
+# Continuar a Dashboard tras precheck
+# ---------------------------
+@main.route('/continuar/eflow')
+def continuar_eflow():
+    # Lo llevamos al dashboard (que hoy muestra el selector)
+    return redirect(url_for('main.dashboard'))
+
+
+

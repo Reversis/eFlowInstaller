@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Validación de requisitos · {{ product|capitalize }}</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root{
+      --brand:#3b82f6; --brand-dark:#2563eb; --brand2:#60a5fa;
+      --bg:#f5f7fb; --card:#ffffff; --text:#0f172a; --muted:#64748b;
+      --shadow:0 8px 22px rgba(15,23,42,.08); --container:1000px;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0; font-family:"Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;
+      background:var(--bg); color:var(--text); display:flex; flex-direction:column; min-height:100vh;
+    }
+
+    header{ background:#fff; border-bottom:3px solid var(--brand); }
+    .wrap{ max-width:var(--container); margin:0 auto; padding:12px 20px; display:flex; align-items:center; gap:14px; }
+    header img{ height:45px; width:auto; display:block; }
+    .title{ font-size:18px; font-weight:700; color:var(--brand); margin:0; }
+
+    main{ flex:1; }
+    .main-wrap{ max-width:900px; margin:0 auto; padding:28px 20px 40px; }
+    .panel{ background:var(--card); border:1px solid rgba(0,0,0,.08); border-radius:14px; box-shadow:var(--shadow); padding:18px; }
+
+    .status{ padding:12px; border-radius:10px; background:#eaf2ff; color:#0b49b5; margin:12px 0; }
+
+    ul{ list-style:none; padding:0; margin:12px 0; }
+    li{ display:flex; justify-content:space-between; align-items:center; border:1px solid rgba(0,0,0,.06); border-radius:10px; padding:10px 12px; margin-bottom:10px; background:#fff; }
+    .ok{ color:#0f8b2e; font-weight:700; }
+    .fail{ color:#b50b0b; font-weight:700; }
+    .small{ color:#555; font-size:12px; margin-top:4px; }
+
+    .actions{ display:none; margin-top:12px; gap:10px; flex-wrap:wrap; }
+    .btn{ display:inline-block; background:var(--brand); color:#fff; border:none; border-radius:10px; padding:12px 16px; cursor:pointer; text-decoration:none; transition: background .15s ease, transform .12s ease, box-shadow .15s ease; }
+    .btn:hover{ background:var(--brand-dark); transform: translateY(-1px); }
+    .btn.gray{ background:#6b7280; }
+    .btn.gray:hover{ background:#565c66; }
+
+    footer{ background:#fff; border-top:1px solid rgba(0,0,0,.06); }
+    .footer-wrap{ max-width:var(--container); margin:0 auto; padding:14px 20px; text-align:center; color:#777; font-size:13px; }
+    .footer-wrap b{ color:#0b1220; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <img src="{{ url_for('static', filename='logo_sidesys.png') }}" alt="SIDESYS" />
+      <h1 class="title">Validación de requisitos · {{ product|capitalize }}</h1>
+    </div>
+  </header>
+
+  <main>
+    <div class="main-wrap">
+      <div class="panel">
+        <div id="loading" class="status">
+          <b>Espere unos minutos...</b> Estamos analizando el servidor y validando requisitos mínimos.
+        </div>
+
+        <ul id="checklist" style="display:none"></ul>
+
+        <div id="actions" class="actions">
+          <!-- Siempre habilitado -->
+          <a id="continueBtn" class="btn" href="{{ url_for('main.continuar_eflow') }}">Continuar al Dashboard</a>
+          <button type="button" id="retryBtn" class="btn gray">Reintentar análisis</button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <div class="footer-wrap">
+      Desarrollado por <b>Pablo Ferreras</b> · SIDESYS IT SOLUTIONS
+    </div>
+  </footer>
+
+  <script>
+    let precheckState = { ok: false, missing: [] };
+
+    async function cargar() {
+      const res = await fetch("/api/precheck?product={{ product }}");
+      const data = await res.json();
+      precheckState = { ok: !!data.ok, missing: Array.isArray(data.missing) ? data.missing : [] };
+
+      const loading = document.getElementById('loading');
+      const checklist = document.getElementById('checklist');
+      const actions = document.getElementById('actions');
+
+      loading.style.display = 'none';
+      checklist.style.display = 'block';
+      checklist.innerHTML = "";
+
+      data.results.forEach(item => {
+        const li = document.createElement('li');
+        li.innerHTML = `
+          <div>
+            <div><b>${item.name}</b></div>
+            ${item.info ? `<div class="small">${item.info}</div>` : ""}
+            ${(!item.ok && item.name.includes('URL Rewrite')) ? 
+              `<div class="small"><a href="${data.rewrite_download}" target="_blank" rel="noopener">Descargar URL Rewrite</a></div>` 
+              : ''}
+            ${!item.ok && item.fix ? `<div class="small">${item.fix}</div>` : ''}
+          </div>
+          <div class="${item.ok ? 'ok' : 'fail'}">${item.ok ? 'OK' : 'FALTA'}</div>
+        `;
+        checklist.appendChild(li);
+      });
+
+      actions.style.display = 'flex';
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      cargar();
+
+      // Continuar: si falta algo, advertimos; si no, pasa sin ruido.
+      document.getElementById('continueBtn').addEventListener('click', (e) => {
+        if (!precheckState.ok) {
+          const lista = precheckState.missing && precheckState.missing.length
+            ? "\n\n• " + precheckState.missing.join("\n• ")
+            : "";
+          const msg = "Faltan componentes mínimos para e-Flow." + lista + "\n\n¿Seguro que deseas continuar de todos modos?";
+          if (!confirm(msg)) {
+            e.preventDefault(); // se queda en la página
+          }
+        }
+        // si ok, no mostramos nada y dejamos seguir
+      });
+
+      document.getElementById('retryBtn').addEventListener('click', () => {
+        document.getElementById('loading').style.display = 'block';
+        document.getElementById('checklist').style.display = 'none';
+        document.getElementById('actions').style.display = 'none';
+        cargar();
+      });
+    });
+  </script>
+</body>
+</html>
