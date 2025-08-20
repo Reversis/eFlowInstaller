@@ -20,7 +20,7 @@ def backend_form():
 
 @main.route('/install/backend', methods=['POST'])
 def install_backend():
-    result = backend.run_backend_installation(request.form)
+    result = backend.run_backend_installation(request.form, request.files)
     return f"<pre>{result['output']}</pre><br><a href='/{result['log_file']}'>Descargar Log</a>"
 
 # ---------------------------
