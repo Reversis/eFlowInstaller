@@ -1,0 +1,143 @@
+<!-- app/templates/emission.html -->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>Configurar eFlow.Emission.WebApi</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    :root{ --brand:#2563eb }
+    body{ background:#f8fafc; font-family:system-ui,sans-serif }
+    .page-title{ color:var(--brand); font-weight:700 }
+    .card{ border:none; border-radius:14px; box-shadow:0 10px 30px rgba(15,23,42,.07) }
+    .form-label{ font-weight:600 }
+    .hint{ color:#6b7280; font-size:12px }
+    .btn-primary{ background:var(--brand); border:none; border-radius:8px }
+    .btn-secondary{ background:#4b5563; border:none; border-radius:8px }
+    .mode-pill{ display:inline-block; padding:6px 10px; border-radius:999px; background:#eef2ff; color:#1d4ed8; font-weight:700; font-size:12px }
+  </style>
+</head>
+<body>
+<div class="container py-4">
+  <div class="d-flex align-items-center justify-content-between mb-3">
+    <h4 class="page-title m-0">Configurar eFlow.Emission.WebApi</h4>
+    <span id="modePill" class="mode-pill">Modo: NME (paths)</span>
+  </div>
+
+  <div class="card p-3">
+    <form method="POST" action="{{ url_for('main.install_emission') }}" id="emissionForm">
+      <input type="hidden" name="mode" id="mode" value="nme" />
+
+      <!-- Selector de modo -->
+      <div class="row g-3 mb-1">
+        <div class="col-md-6">
+          <label class="form-label">Modo de configuración</label>
+          <div class="d-flex gap-3">
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="modeRadio" id="mode_nme" value="nme" checked>
+              <label class="form-check-label" for="mode_nme">NME (segmentos en URL)</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="modeRadio" id="mode_site" value="nmesite">
+              <label class="form-check-label" for="mode_site">NME Site (puertos)</label>
+            </div>
+          </div>
+          <div class="hint mt-1">
+            NME: <code>http://{servidor}/{eflow}/Services/EmissionService.svc</code> ·
+            NME Site: <code>http://{servidor}:{puerto}/...</code>
+          </div>
+        </div>
+      </div>
+
+      <hr>
+
+      <div class="row g-3">
+        <!-- Base path -->
+        <div class="col-md-12">
+          <label class="form-label">Ruta base (carpeta raíz del FrontEnd)</label>
+          <input name="base_path" id="base_path" class="form-control"
+                 placeholder="C:\Sides" required>
+          <div class="hint">
+            Se usarán rutas relativas:
+            <code>FrontEnd\Sidesys.eFlow.Emission.API\Web.config</code> y
+            <code>FrontEnd\STE\SPA\assets\configuration\emission.config.json</code>
+          </div>
+        </div>
+
+        <!-- Servidor / host -->
+        <div class="col-md-6">
+          <label class="form-label">Servidor / host</label>
+          <input name="server" id="server" class="form-control" placeholder="mi-servidor" required>
+          <div class="hint">Ej.: <code>intranet.sidesys.local</code> o <code>192.168.1.10</code></div>
+        </div>
+
+        <!-- eFlow (segmento o puerto) -->
+        <div class="col-md-3">
+          <label class="form-label"><span id="label_eflow">Segmento eFlow</span></label>
+          <input name="eflow" id="eflow" class="form-control" placeholder="eflow" required>
+          <div class="hint" id="hint_eflow">Para NME: segmento (p. ej. <code>eflow</code>)</div>
+        </div>
+
+        <!-- eFlowApi (segmento o puerto) -->
+        <div class="col-md-3">
+          <label class="form-label"><span id="label_eflowApi">Segmento Emission API</span></label>
+          <input name="eflowApi" id="eflowApi" class="form-control" placeholder="eflow-emission-api" required>
+          <div class="hint" id="hint_eflowApi">Para NME: segmento (p. ej. <code>eflow-emission-api</code>)</div>
+        </div>
+
+        <!-- Ruta del log (opcional) -->
+        <div class="col-md-12">
+          <label class="form-label">Ruta de log (opcional)</label>
+          <input name="log_path" id="log_path" class="form-control" placeholder="C:\eFlowInstaller\logs\emission_update.log">
+          <div class="hint">Si no se indica, el backend usará su ubicación por defecto.</div>
+        </div>
+      </div>
+
+      <div class="mt-3 d-flex gap-2">
+        <button class="btn btn-primary" type="submit">Aplicar cambios</button>
+        <a class="btn btn-secondary" href="{{ url_for('main.dashboard') }}">Volver</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  const modeRadioNme  = document.getElementById('mode_nme');
+  const modeRadioSite = document.getElementById('mode_site');
+  const hiddenMode    = document.getElementById('mode');
+  const pill          = document.getElementById('modePill');
+
+  const labelEflow    = document.getElementById('label_eflow');
+  const labelEflowApi = document.getElementById('label_eflowApi');
+  const hintEflow     = document.getElementById('hint_eflow');
+  const hintEflowApi  = document.getElementById('hint_eflowApi');
+
+  function applyMode(mode){
+    hiddenMode.value = mode;
+    if(mode === 'nmesite'){
+      pill.textContent = 'Modo: NME Site (puertos)';
+      labelEflow.textContent    = 'Puerto eFlow';
+      labelEflowApi.textContent = 'Puerto Emission API';
+      hintEflow.innerHTML    = 'Para Site: puerto (p. ej. <code>8080</code>)';
+      hintEflowApi.innerHTML = 'Para Site: puerto (p. ej. <code>9090</code>)';
+      document.getElementById('eflow').placeholder = '8080';
+      document.getElementById('eflowApi').placeholder = '9090';
+    } else {
+      pill.textContent = 'Modo: NME (paths)';
+      labelEflow.textContent    = 'Segmento eFlow';
+      labelEflowApi.textContent = 'Segmento Emission API';
+      hintEflow.innerHTML    = 'Para NME: segmento (p. ej. <code>eflow</code>)';
+      hintEflowApi.innerHTML = 'Para NME: segmento (p. ej. <code>eflow-emission-api</code>)';
+      document.getElementById('eflow').placeholder = 'eflow';
+      document.getElementById('eflowApi').placeholder = 'eflow-emission-api';
+    }
+  }
+
+  modeRadioNme.addEventListener('change', ()=> applyMode('nme'));
+  modeRadioSite.addEventListener('change', ()=> applyMode('nmesite'));
+  // estado inicial
+  applyMode('nme');
+</script>
+</body>
+</html>
