@@ -143,17 +143,17 @@ cd eFlowInstaller
 
 ## 📝 Roadmap
 
-### 🎯 v0.2.0 (Q1 2024)
+### 🎯 v0.2.0 (Q1 2025)
 - [ ] Completar módulo Backend (100%)
 - [ ] Iniciar módulo Frontend
 - [ ] Implementar logging avanzado
 
-### 🎯 v0.3.0 (Q2 2024)
+### 🎯 v0.3.0 (Q2 2025)
 - [ ] Finalizar Frontend
 - [ ] Iniciar Middleware
 - [ ] Dashboard de monitoreo
 
-### 🎯 v1.0.0 (Q4 2024)
+### 🎯 v1.0.0 (Q4 2025)
 - [ ] Todos los módulos completados
 - [ ] Documentación completa
 - [ ] Testing automatizado
@@ -162,7 +162,7 @@ cd eFlowInstaller
 
 ## 📞 Soporte
 
-- 📧 **Email**: soporte@sidesys.com
+- 📧 **Email**: pablodesign0@gmail.com
 - 💬 **Issues**: [GitHub Issues](https://github.com/tu-usuario/eFlowInstaller/issues)
 - 📖 **Wiki**: [Documentación](https://github.com/tu-usuario/eFlowInstaller/wiki)
 
@@ -172,10 +172,10 @@ cd eFlowInstaller
 
 **🌟 ¿Te gusta este proyecto? ¡Dale una estrella!**
 
-Made with ❤️ for **Sidesys**
+Made with ❤️ for **Pablo Ferreras**
 
 ---
 
-*© 2024 eFlowInstaller. Todos los derechos reservados.*
+*© 2025 Pablo Ferreras. Todos los derechos reservados.*
 
 </div>
