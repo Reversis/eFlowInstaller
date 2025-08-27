@@ -45,7 +45,7 @@
   <img src="https://geps.dev/progress/80" alt="80%" />
 </td>
 <td>🟡 En desarrollo activo</td>
-<td>Q1 2024</td>
+<td>Q1 2025</td>
 </tr>
 <tr>
 <td><strong>🎨 Instalador Frontend</strong></td>
@@ -53,7 +53,7 @@
   <img src="https://geps.dev/progress/0" alt="0%" />
 </td>
 <td>⚪ No iniciado</td>
-<td>Q2 2024</td>
+<td>Q2 2025</td>
 </tr>
 <tr>
 <td><strong>🔄 Instalador Middleware</strong></td>
@@ -61,7 +61,7 @@
   <img src="https://geps.dev/progress/0" alt="0%" />
 </td>
 <td>⚪ No iniciado</td>
-<td>Q2 2024</td>
+<td>Q2 2025</td>
 </tr>
 <tr>
 <td><strong>💾 Instalador NCache</strong></td>
@@ -69,7 +69,7 @@
   <img src="https://geps.dev/progress/0" alt="0%" />
 </td>
 <td>⚪ No iniciado</td>
-<td>Q3 2024</td>
+<td>Q3 2025</td>
 </tr>
 <tr>
 <td><strong>🌐 Instalador NME</strong></td>
@@ -77,7 +77,7 @@
   <img src="https://geps.dev/progress/0" alt="0%" />
 </td>
 <td>⚪ No iniciado</td>
-<td>Q3 2024</td>
+<td>Q3 2025</td>
 </tr>
 </tbody>
 </table>
@@ -172,7 +172,7 @@ cd eFlowInstaller
 
 **🌟 ¿Te gusta este proyecto? ¡Dale una estrella!**
 
-Made with ❤️ for **Pablo Ferreras**
+Made with ❤️ by **Pablo Ferreras** for **Sidesys**
 
 ---
 
