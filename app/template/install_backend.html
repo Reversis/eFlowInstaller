@@ -23,102 +23,56 @@
     a{color:var(--primary);text-decoration:none}
     a:hover{color:#1e40af}
 
-    /* HEADER parecido al dashboard (logo + título a la izquierda) */
-    .topbar{
-      position:sticky;top:0;z-index:20;
-      background:#fff;
-      border-bottom:1px solid var(--line);
-    }
-    .topbar-inner{
-      max-width:1200px;margin:0 auto;padding:12px 20px;
-      display:flex;align-items:center;gap:14px;
-    }
-    .brand{
-      display:flex;align-items:center;gap:10px;
-    }
-    .brand img{
-      height:38px;width:auto;display:block;object-fit:contain;
-    }
-    .brand h1{
-      margin:0;font-size:1.15rem;font-weight:700;letter-spacing:.2px;color:var(--primary);
-    }
+    .topbar{position:sticky;top:0;z-index:20;background:#fff;border-bottom:1px solid var(--line)}
+    .topbar-inner{max-width:1200px;margin:0 auto;padding:12px 20px;display:flex;align-items:center;gap:14px}
+    .brand{display:flex;align-items:center;gap:10px}
+    .brand img{height:38px;width:auto;display:block;object-fit:contain}
+    .brand h1{margin:0;font-size:1.15rem;font-weight:700;letter-spacing:.2px;color:var(--primary)}
 
     .wrap{max-width:1200px;margin:22px auto;padding:0 20px}
     .crumbs{font-size:.9rem;color:var(--muted);margin:8px 0 14px}
-    .panel{
-      background:var(--panel);border:1px solid var(--line);border-radius:18px;
-      padding:22px;box-shadow:0 10px 30px rgba(2,6,23,.06), inset 0 1px 0 rgba(255,255,255,.6);
-    }
+    .panel{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:22px;box-shadow:0 10px 30px rgba(2,6,23,.06), inset 0 1px 0 rgba(255,255,255,.6)}
     .grid{display:grid;grid-template-columns: repeat(12, 1fr);gap:18px}
-    .card{
-      background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px 16px 18px;
-      box-shadow:0 6px 20px rgba(2,6,23,.05);
-    }
+    .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px 16px 18px;box-shadow:0 6px 20px rgba(2,6,23,.05)}
     .card h3{margin:0 0 10px 0;font-size:1.05rem;color:#1e293b}
     .label{display:block;margin:8px 0 6px 2px;font-size:.9rem;color:var(--muted)}
-    input[type="text"], input[type="password"], input[type="file"], textarea{
-      width:100%;background:#fff;border:1px solid #e2e8f0;
-      border-radius:12px;color:var(--text);padding:12px 12px;font-size:.95rem;
-      outline:none;transition:.2s box-shadow,.2s border-color;
+    input[type="text"], input[type="password"], input[type="file"], input[type="number"], textarea, select{
+      width:100%;background:#fff;border:1px solid #e2e8f0;border-radius:12px;color:var(--text);padding:12px 12px;font-size:.95rem;outline:none;transition:.2s box-shadow,.2s border-color
     }
     textarea{min-height:120px;resize:vertical}
-    input:focus, textarea:focus{border-color:var(--primary);box-shadow:0 0 0 4px var(--ring)}
+    input:focus, textarea:focus, select:focus{border-color:var(--primary);box-shadow:0 0 0 4px var(--ring)}
     .row{display:flex;gap:12px;align-items:center}
     .hint{font-size:.82rem;color:var(--muted);margin-top:6px}
-    .check{
-      appearance:none;width:18px;height:18px;border-radius:6px;border:1px solid #cbd5e1;
-      background:#fff;display:inline-grid;place-items:center;cursor:pointer;transition:.2s;
-    }
+    .check{appearance:none;width:18px;height:18px;border-radius:6px;border:1px solid #cbd5e1;background:#fff;display:inline-grid;place-items:center;cursor:pointer;transition:.2s}
     .check:checked{background:var(--primary);border-color:var(--primary)}
 
-    .btn{
-      display:inline-flex;align-items:center;justify-content:center;gap:10px;
-      background:linear-gradient(180deg, var(--primary), var(--primary-600));
-      color:white;border:none;border-radius:12px;padding:12px 18px;font-weight:600;
-      letter-spacing:.2px;cursor:pointer;transition:transform .06s ease, box-shadow .2s ease, filter .2s ease;
-      box-shadow:0 8px 20px rgba(59,130,246,.28), inset 0 1px 0 rgba(255,255,255,.35);
-    }
+    .btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;background:linear-gradient(180deg, var(--primary), var(--primary-600));color:white;border:none;border-radius:12px;padding:12px 18px;font-weight:600;letter-spacing:.2px;cursor:pointer;transition:transform .06s ease, box-shadow .2s ease, filter .2s ease;box-shadow:0 8px 20px rgba(59,130,246,.28), inset 0 1px 0 rgba(255,255,255,.35)}
     .btn:hover{filter:brightness(1.03)}
     .btn:active{transform:translateY(1px)}
-    .btn.secondary{
-      background:#ffffff;border:1px solid #e2e8f0;color:#0f172a;box-shadow:none
-    }
+    .btn.secondary{background:#ffffff;border:1px solid #e2e8f0;color:#0f172a;box-shadow:none}
 
     .actions{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-top:12px;justify-content:flex-end}
-    .drop{
-      border:1.5px dashed #cbd5e1;border-radius:14px;background:var(--soft);padding:18px;cursor:pointer;
-      display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center;
-      transition: .2s border-color, .2s background;
-    }
+    .drop{border:1.5px dashed #cbd5e1;border-radius:14px;background:var(--soft);padding:18px;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center;transition: .2s border-color, .2s background}
     .drop:hover{border-color:var(--primary);background:#f1f5ff}
     .file-list{margin-top:10px;font-size:.9rem;color:var(--muted);white-space:pre-wrap}
-    .result{
-      white-space:pre-wrap;background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;
-      padding:12px;max-height:45vh;overflow:auto;font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;font-size:.9rem
-    }
+    .result{white-space:pre-wrap;background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:12px;max-height:45vh;overflow:auto;font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;font-size:.9rem}
     .divider{height:1px;background:linear-gradient(90deg, transparent, rgba(148,163,184,.25), transparent);margin:14px 0}
 
-    /* OVERLAY */
     .overlay{position:fixed;inset:0;background:rgba(15,23,42,.35);display:none;place-items:center;z-index:99}
-    .overlay .box{
-      background:#ffffff;border:1px solid var(--line);border-radius:16px;padding:22px 20px;min-width:320px;max-width:92vw;text-align:center;
-      box-shadow:0 10px 30px rgba(2,6,23,.18);
-    }
+    .overlay .box{background:#ffffff;border:1px solid var(--line);border-radius:16px;padding:22px 20px;min-width:320px;max-width:92vw;text-align:center;box-shadow:0 10px 30px rgba(2,6,23,.18)}
     .spinner{width:28px;height:28px;border-radius:50%;border:3px solid rgba(2,6,23,.12);border-top-color:var(--primary);animation:spin 1s linear infinite;margin:0 auto 12px}
     @keyframes spin{to{transform:rotate(360deg)}}
 
-    /* Responsive */
     @media (max-width: 980px){ .grid{grid-template-columns:repeat(6,1fr)} }
     @media (max-width: 640px){ .grid{grid-template-columns:repeat(2,1fr)} }
   </style>
 </head>
 <body>
-  <!-- HEADER (igual al dashboard: logo + título alineados a la izquierda) -->
   <div class="topbar">
     <div class="topbar-inner">
       <a class="brand" href="{{ url_for('main.dashboard') }}">
         <img src="{{ url_for('static', filename='logo_sidesys.png') }}" alt="Sidesys" />
-        <h1>eFlow Installer</h1>
+        <h1>eFlow Installer backend</h1>
       </a>
     </div>
   </div>
@@ -161,7 +115,7 @@
             </div>
           </div>
 
-          <!-- Usuario(s) de la aplicación (002) -->
+          <!-- Usuario(s) de la aplicación -->
           <div class="card" style="grid-column: span 12;">
             <h3>Usuarios de la Aplicación (Script de Usuarios)</h3>
             <div class="grid">
@@ -226,6 +180,59 @@
             </div>
           </div>
 
+          <!-- Sanitización -->
+          <div class="card" style="grid-column: span 12;">
+            <h3>Sanitización de Scripts</h3>
+            <div class="grid">
+              <div style="grid-column: span 4;">
+                <label class="label">Nivel</label>
+                <select name="sanitize_level">
+                  <option value="light" selected>Light (recomendado)</option>
+                  <option value="aggressive">Aggressive</option>
+                  <option value="none">None</option>
+                </select>
+              </div>
+              <div style="grid-column: span 4;">
+                <label class="label">Ámbito</label>
+                <select name="sanitize_scope" id="sanitizeScope">
+                  <option value="matching" selected>Solo scripts que hacen match</option>
+                  <option value="all">Todos los scripts</option>
+                  <option value="none">Ninguno</option>
+                </select>
+              </div>
+              <div style="grid-column: span 4;">
+                <label class="label">Patrón (si “matching”)</label>
+                <input type="text" name="sanitize_match" id="sanitizeMatch" value="^002.*\.sql$" placeholder="regex, ej: ^002.*\.sql$" />
+              </div>
+              <div style="grid-column: span 12;" class="row">
+                <input id="sanitizeReport" class="check" type="checkbox" name="sanitize_report" checked />
+                <label for="sanitizeReport" class="label" style="margin:0">Incluir reporte de líneas con caracteres no-ASCII</label>
+              </div>
+            </div>
+            <div class="hint">La sanitización se aplica sobre una <b>copia temporal</b>, tus archivos originales no se tocan.</div>
+          </div>
+
+          <!-- Ejecución / Seguridad -->
+          <div class="card" style="grid-column: span 12;">
+            <h3>Opciones de Ejecución</h3>
+            <div class="grid">
+              <div style="grid-column: span 4;">
+                <label class="label">Reintentos por script</label>
+                <input type="number" name="retries" min="0" step="1" value="1" />
+                <div class="hint">0 = sin reintentos (solo 1 intento).</div>
+              </div>
+              <div style="grid-column: span 4;">
+                <label class="label">Timeout SQL (segundos)</label>
+                <input type="number" name="sql_timeout" min="30" step="5" value="120" />
+              </div>
+              <div style="grid-column: span 4;" class="row" title="Simula toda la ejecución sin correr scripts">
+                <input id="dryRun" class="check" type="checkbox" name="dry_run" />
+                <label for="dryRun" class="label" style="margin:0">Dry-run (simulación)</label>
+              </div>
+            </div>
+            <div class="hint">Se registra histórico por <b>hash</b> del contenido final; si no cambiaste un script, se <b>salta</b>.</div>
+          </div>
+
           <!-- Acciones -->
           <div class="actions" style="grid-column: span 12;">
             <a class="btn secondary" href="{{ url_for('main.dashboard') }}">
@@ -275,27 +282,37 @@
 
     // Drag & Drop
     const drop = qs('#dropArea'); const fileInput = qs('#fileInput'); const fileList = qs('#fileList');
-    drop.addEventListener('click', ()=> fileInput.click());
-    drop.addEventListener('dragover', e=>{
+    drop?.addEventListener('click', ()=> fileInput.click());
+    drop?.addEventListener('dragover', e=>{
       e.preventDefault();
       drop.style.borderColor='var(--primary)'; drop.style.background='#f1f5ff';
     });
-    drop.addEventListener('dragleave', ()=>{
+    drop?.addEventListener('dragleave', ()=>{
       drop.style.borderColor='#cbd5e1'; drop.style.background='var(--soft)';
     });
-    drop.addEventListener('drop', e=>{
+    drop?.addEventListener('drop', e=>{
       e.preventDefault();
       drop.style.borderColor='#cbd5e1'; drop.style.background='var(--soft)';
       const files = e.dataTransfer.files;
       if(files && files.length){ fileInput.files = files; renderFiles(); }
     });
-    fileInput.addEventListener('change', renderFiles);
+    fileInput?.addEventListener('change', renderFiles);
     function renderFiles(){
       if(!fileInput.files?.length){ fileList.textContent=''; return; }
       fileList.textContent = [...fileInput.files].map(f=>`• ${f.name}`).join('\n');
     }
 
-    // Submit con overlay y fetch
+    // Sanitización: habilitar/deshabilitar patrón
+    const sanitizeScope = qs('#sanitizeScope');
+    const sanitizeMatch = qs('#sanitizeMatch');
+    function syncSanitizePattern(){
+      const usePattern = sanitizeScope.value === 'matching' && sanitizeMatch;
+      sanitizeMatch.disabled = !usePattern;
+      sanitizeMatch.style.opacity = usePattern ? 1 : .55;
+    }
+    sanitizeScope.addEventListener('change', syncSanitizePattern); syncSanitizePattern();
+
+    // Submit con overlay y fetch (auto JSON o HTML)
     const form = qs('#backendForm');
     const overlay = qs('#overlay');
     const resultBox = qs('#result');
@@ -303,12 +320,20 @@
     form.addEventListener('submit', async (e)=>{
       e.preventDefault();
       overlay.style.display='grid';
-      resultBox.textContent='Enviando…';
+      resultBox.textContent='Procesando…';
       try{
         const fd = new FormData(form);
         const resp = await fetch(form.action, { method:'POST', body: fd });
-        const html = await resp.text();
-        resultBox.innerHTML = html; // tu ruta devuelve HTML con <pre> + link al log
+        const ctype = resp.headers.get('content-type') || '';
+        if(ctype.includes('application/json')){
+          const data = await resp.json();
+          const statusEmoji = data.status === 'success' ? '✅' : '❌';
+          const logLink = data.log_file ? `<div class="hint" style="margin-top:8px">Log: <code>${data.log_file}</code></div>` : '';
+          resultBox.innerHTML = `${statusEmoji} <b>${data.status.toUpperCase()}</b>\n<div class="divider"></div><pre>${(data.output||'').replace(/[&<>]/g, s=>({ '&':'&amp;','<':'&lt;','>':'&gt;' }[s]))}</pre>${logLink}`;
+        }else{
+          const html = await resp.text();
+          resultBox.innerHTML = html; // fallback si tu endpoint devuelve HTML
+        }
       }catch(err){
         console.error(err);
         resultBox.textContent = 'Error enviando la petición. Revisa la consola.';
@@ -319,4 +344,3 @@
   </script>
 </body>
 </html>
-

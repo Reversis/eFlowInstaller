@@ -1,7 +1,11 @@
 # app/installer/backend.py
-import re
+from __future__ import annotations
+
 import os
+import re
+import time
 import shutil
+import hashlib
 import tempfile
 import subprocess
 from datetime import datetime
@@ -19,6 +23,7 @@ def _new_log() -> Path:
     return LOG_DIR / f"backend_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
 
 def _log(fp: Path, msg: str) -> None:
+    # ⚠️ Evita loggear credenciales literalmente.
     with open(fp, "a", encoding="utf-8") as f:
         f.write(f"[{_ts()}] {msg}\n")
 
@@ -39,6 +44,7 @@ def _read_text_any(path: Path) -> str:
         except Exception as e:
             last_err = e
             continue
+    # Fallback permisivo
     return path.read_text(encoding="utf-8", errors="replace")
 
 # ===================== Sanitización (configurable) =====================
@@ -238,6 +244,12 @@ def _script_contains_create_db(path: Path) -> bool:
     except Exception:
         return False
 
+# Detectar USE [db] en el contenido (respeto al script)
+_RE_USE_DB_TOP = re.compile(r'^\s*USE\s+\[?([^\]\s]+)\]?', re.IGNORECASE | re.MULTILINE)
+def _detect_use_db(txt: str) -> Optional[str]:
+    m = _RE_USE_DB_TOP.search(txt)
+    return m.group(1) if m else None
+
 # ===================== Reescritura MDF/LDF =====================
 MDF_RE = re.compile(r"(FILENAME\s*=\s*N?['\"])([^'\"]*?\.mdf)(['\"])", re.IGNORECASE)
 LDF_RE = re.compile(r"(FILENAME\s*=\s*N?['\"])([^'\"]*?\.ldf)(['\"])", re.IGNORECASE)
@@ -383,16 +395,26 @@ def _customize_users_in_file(path: Path, users: List[Tuple[Optional[str], Option
     except Exception as e:
         _log(log, f"⚠️ No se pudo personalizar usuarios en {path.name}: {e}")
 
-# ===================== sqlcmd helpers =====================
+# ===================== sqlcmd helpers (UTF-8 + QUOTED_IDENTIFIER) =====================
+def _sqlcmd_args(sql_server: str, windows_auth: bool, user: str, password: str,
+                 database: str, extra: List[str]) -> List[str]:
+    # -b: error => exit code; -r 1: errores a STDERR; -w 65535: ancho grande
+    # -f 65001: forzar UTF-8; -I: QUOTED_IDENTIFIER ON
+    args = ["sqlcmd", "-S", sql_server, "-d", database, "-b", "-r", "1", "-w", "65535", "-f", "65001", "-I"]
+    if windows_auth:
+        args += ["-E"]
+    else:
+        args += ["-U", user, "-P", password]
+    args += extra
+    return args
+
 def _db_exists(sql_server: str, user: str, password: str, windows_auth: bool, db_name: str) -> bool:
     safe_db = db_name.replace("'", "''")
     q = f"SET NOCOUNT ON; IF DB_ID(N'{safe_db}') IS NOT NULL SELECT 1 ELSE SELECT 0;"
-    if windows_auth:
-        cmd = f'sqlcmd -S "{sql_server}" -E -d "master" -Q "{q}" -h -1 -W -b'
-    else:
-        cmd = f'sqlcmd -S "{sql_server}" -U "{user}" -P "{password}" -d "master" -Q "{q}" -h -1 -W -b'
-    res = subprocess.run(cmd, shell=True, capture_output=True, text=True)
-    if res.returncode != 0: return False
+    args = _sqlcmd_args(sql_server, windows_auth, user, password, "master", ["-Q", q, "-h", "-1", "-W"])
+    res = subprocess.run(args, capture_output=True, text=True)
+    if res.returncode != 0:
+        return False
     try:
         last = res.stdout.strip().splitlines()[-1].strip()
         return last == "1"
@@ -400,22 +422,18 @@ def _db_exists(sql_server: str, user: str, password: str, windows_auth: bool, db
         return False
 
 def _sqlcmd(sql_server: str, user: str, password: str, database: str,
-            script_path: Path, windows_auth: bool) -> Tuple[int, str, str]:
-    script = str(script_path)
-    if windows_auth:
-        cmd = f'sqlcmd -S "{sql_server}" -E -d "{database}" -i "{script}" -b -r1'
-    else:
-        cmd = f'sqlcmd -S "{sql_server}" -U "{user}" -P "{password}" -d "{database}" -i "{script}" -b -r1'
-    result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
-    return result.returncode, result.stdout, result.stderr
+            script_path: Path, windows_auth: bool, timeout: Optional[int]) -> Tuple[int, str, str]:
+    args = _sqlcmd_args(sql_server, windows_auth, user, password, database, ["-i", str(script_path)])
+    try:
+        result = subprocess.run(args, capture_output=True, text=True, timeout=timeout if timeout and timeout > 0 else None)
+        return result.returncode, result.stdout, result.stderr
+    except subprocess.TimeoutExpired as e:
+        return 124, e.stdout or "", e.stderr or f"Timeout de {timeout}s"
 
 def _exec_tsql(sql_server: str, user: str, password: str, windows_auth: bool,
                database: str, query: str) -> Tuple[int, str, str]:
-    if windows_auth:
-        cmd = f'sqlcmd -S "{sql_server}" -E -d "{database}" -Q "{query}" -b -r1'
-    else:
-        cmd = f'sqlcmd -S "{sql_server}" -U "{user}" -P "{password}" -d "{database}" -Q "{query}" -b -r1'
-    res = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+    args = _sqlcmd_args(sql_server, windows_auth, user, password, database, ["-Q", query])
+    res = subprocess.run(args, capture_output=True, text=True)
     return res.returncode, res.stdout, res.stderr
 
 # ===================== Preprovisión/mapeo de logins/usuarios =====================
@@ -478,7 +496,7 @@ def ordenar_scripts(scripts: List[Path]) -> List[Path]:
         return (num, p.name.lower())
     return sorted(scripts, key=key)
 
-# ===================== Reemplazos literales (sólo CREATE DATABASE) =====================
+# ===================== Reemplazos literales (para staged) =====================
 def reemplazar_en_archivo(ruta: Path, reemplazos: Dict[str, str], log: Path) -> None:
     if not ruta.exists():
         _log(log, f"⚠️  No existe: {ruta}")
@@ -496,17 +514,118 @@ def reemplazar_en_archivo(ruta: Path, reemplazos: Dict[str, str], log: Path) -> 
     except Exception as e:
         _log(log, f"❌ Error reemplazando en {ruta.name}: {e}")
 
+# ===================== Histórico por HASH (idempotencia) =====================
+HISTORY_TABLE = "__eflow_installer_history"
+
+def _sha256_text(s: str) -> str:
+    return hashlib.sha256(s.encode("utf-8")).hexdigest()
+
+def _ensure_history_table(sql_server: str, user: str, password: str, windows_auth: bool, db_name: str, log: Path) -> None:
+    q = f"""
+    IF OBJECT_ID(N'dbo.{HISTORY_TABLE}', N'U') IS NULL
+    BEGIN
+        CREATE TABLE dbo.{HISTORY_TABLE}(
+            id INT IDENTITY(1,1) PRIMARY KEY,
+            script_name NVARCHAR(260) NOT NULL,
+            script_hash CHAR(64) NOT NULL,
+            applied_at DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
+            duration_ms INT NOT NULL,
+            success BIT NOT NULL,
+            message NVARCHAR(MAX) NULL
+        );
+        CREATE UNIQUE INDEX UX_{HISTORY_TABLE}_name_hash ON dbo.{HISTORY_TABLE}(script_name, script_hash);
+    END
+    """
+    code, out, err = _exec_tsql(sql_server, user, password, windows_auth, db_name, q)
+    if code != 0:
+        _log(log, f"⚠️ No pude asegurar tabla de histórico en {db_name}:\n{err or out}")
+
+def _get_applied_hashes(sql_server: str, user: str, password: str, windows_auth: bool, db_name: str) -> set[str]:
+    q = f"SET NOCOUNT ON; SELECT script_hash FROM dbo.{HISTORY_TABLE} WHERE success = 1;"
+    code, out, err = _exec_tsql(sql_server, user, password, windows_auth, db_name, q)
+    if code != 0:
+        return set()
+    lines = [ln.strip() for ln in (out or "").splitlines() if ln.strip() and not ln.strip().startswith("-")]
+    return {ln for ln in lines if len(ln) == 64}
+
+def _insert_history(sql_server: str, user: str, password: str, windows_auth: bool,
+                    db_name: str, script_name: str, script_hash: str,
+                    duration_ms: int, success: bool, message: Optional[str]) -> None:
+    # Escapar datos para T-SQL
+    sname = script_name.replace("'", "''")
+    if message:
+        msg_escaped = message.replace("'", "''")
+        values_part = f"N'{sname}', '{script_hash}', {duration_ms}, {1 if success else 0}, N'{msg_escaped}'"
+    else:
+        values_part = f"N'{sname}', '{script_hash}', {duration_ms}, {1 if success else 0}, NULL"
+
+    q = (
+        f"INSERT INTO dbo.{HISTORY_TABLE}(script_name, script_hash, duration_ms, success, message) "
+        f"VALUES ({values_part});"
+    )
+    _exec_tsql(sql_server, user, password, windows_auth, db_name, q)
+
+# ===================== Wrapper de sesión por script =====================
+def _make_session_wrapped_file(staged_path: Path, verbose: bool = True) -> Path:
+    """
+    Crea un .sql temporal con preámbulo de sesión:
+    - NOCOUNT, XACT_ABORT, ANSI_WARNINGS
+    - TRACEON(460) para mensajes de truncado más verbosos (si disponible)
+    """
+    tmp = Path(tempfile.mkdtemp(prefix="sqlwrap_"))
+    wrapper = tmp / f"wrapped_{staged_path.name}"
+    pre = "SET NOCOUNT ON;\r\nSET XACT_ABORT ON;\r\nSET ANSI_WARNINGS ON;\r\n"
+    if verbose:
+        pre += "BEGIN TRY DBCC TRACEON(460) WITH NO_INFOMSGS; END TRY BEGIN CATCH END CATCH;\r\n"
+    wrapper.write_text(pre + _read_text_any(staged_path), encoding="utf-8")
+    return wrapper
+
+# ===================== Staging de scripts =====================
+def _prepare_script_text_for_exec(path: Path, db_name: str,
+                                  sanitize_do: bool, sanitize_level: str, sanitize_report: bool,
+                                  users: List[Tuple[Optional[str], Optional[str]]],
+                                  mdf_dir: Optional[str], ldf_dir: Optional[str],
+                                  log: Path,
+                                  tokens: Optional[Dict[str, str]] = None) -> Tuple[Path, str]:
+    """
+    Devuelve: (ruta_temp_sql, contenido_final_para_hash)
+    - Copia a temp, aplica sanitización/reemplazos sobre la copia.
+    - Tokens SOLO si el script contiene CREATE DATABASE (sobre la copia).
+    - Calcula el texto final (para hash) leyendo la copia.
+    """
+    tmp = Path(tempfile.mkdtemp(prefix="sqlstage_"))
+    staged = tmp / path.name
+    staged.write_text(_read_text_any(path), encoding="utf-8")
+
+    # 🔁 Tokens SOLO si el script crea BD (en la COPIA staged, no en el original)
+    if tokens and _script_contains_create_db(path):
+        reemplazar_en_archivo(staged, tokens, log)
+
+    if sanitize_do:
+        sanitize_sql_file(staged, log, level=sanitize_level, report_non_ascii=sanitize_report)
+
+    # Personalización (usuarios), BD [..] y MDF/LDF sobre la copia:
+    _customize_users_in_file(staged, users, log)
+    replace_db_brackets_in_file(staged, db_name, log)
+    _rewrite_file_paths_in_file(staged, db_name, mdf_dir, ldf_dir, log)
+
+    final_text = _read_text_any(staged)
+    return staged, final_text
+
 # ===================== Pipeline principal =====================
 def run_backend_installation(form, files=None) -> Dict[str, str]:
     """
     Soporta carpeta o drag&drop de .sql.
-    - Tokens sólo en scripts con CREATE DATABASE. MDF_DIR/LDF_DIR reescriben FILENAME.
+    - Tokens sólo en scripts con CREATE DATABASE (aplicados en staged).
     - Reemplazo de [DB] en corchetes.
     - Personalización y preprovisión de 1-2 usuarios (logins + users).
     - Sanitización selectiva: scope/level/regex/report.
+    - Idempotencia real por hash (tabla __eflow_installer_history).
+    - Stage en temp (no modifica los .sql originales).
+    - Retries y timeout por script, dry-run.
     """
     log = _new_log()
-    staged_dir: Optional[Path] = None
+    staged_dir_for_uploads: Optional[Path] = None
 
     try:
         sql_server   = (form.get('sql_server') or '').strip()
@@ -516,6 +635,17 @@ def run_backend_installation(form, files=None) -> Dict[str, str]:
         windows_auth = (form.get('windows_auth') or '').lower() in ('1','true','on','yes')
         target_path  = (form.get('target_path') or '').strip()
         scripts_dir  = (form.get('scripts_dir') or '').strip()
+
+        # Retries / timeout / dry-run
+        try:
+            retries = max(0, int(form.get('retries', 1)))
+        except Exception:
+            retries = 1
+        try:
+            sql_timeout = max(30, int(form.get('sql_timeout', 120)))
+        except Exception:
+            sql_timeout = 120
+        dry_run = (form.get('dry_run') or '').lower() in ('1','true','on','yes')
 
         tokens_raw = (form.get('tokens') or '').strip()
         tokens: Dict[str, str] = {}
@@ -535,13 +665,14 @@ def run_backend_installation(form, files=None) -> Dict[str, str]:
         if u1 or p1: users.append((u1, p1))
         if u2 or p2: users.append((u2, p2))
 
-        # Controles de sanitización desde el front
+        # Sanitización
         sanitize_scope  = (form.get('sanitize_scope')  or 'matching').lower()   # none|all|matching
         sanitize_level  = (form.get('sanitize_level')  or 'light').lower()      # none|light|aggressive
         sanitize_match  = (form.get('sanitize_match')  or r'^002.*\.sql$').strip()
         sanitize_report = (form.get('sanitize_report') or 'on').lower() in ('1','true','on','yes')
 
         _log(log, f"▶ Parámetros: server={sql_server}, db={db_name}, winAuth={windows_auth}, scripts_dir={scripts_dir or '(upload)'}")
+        _log(log, f"   retries={retries}, timeout={sql_timeout}s, dry_run={dry_run}")
 
         # Fuente de scripts
         scripts: List[Path] = []
@@ -551,12 +682,12 @@ def run_backend_installation(form, files=None) -> Dict[str, str]:
                 raise FileNotFoundError(f"Carpeta de scripts no existe: {base}")
             scripts = [p for p in base.glob("*.sql") if p.is_file()]
         else:
-            staged_dir = Path(tempfile.mkdtemp(prefix="sqlscripts_"))
+            staged_dir_for_uploads = Path(tempfile.mkdtemp(prefix="sqlscripts_"))
             if files:
                 for f in files.getlist('scripts[]'):
                     if not f.filename.lower().endswith('.sql'):
                         continue
-                    dest = staged_dir / Path(f.filename).name
+                    dest = staged_dir_for_uploads / Path(f.filename).name
                     f.save(dest)
                     scripts.append(dest)
 
@@ -568,23 +699,16 @@ def run_backend_installation(form, files=None) -> Dict[str, str]:
         for i, s in enumerate(scripts, 1):
             _log(log, f"   {i:02d}. {s.name}")
 
-        # Tokens sólo en CREATE DATABASE
-        if tokens:
-            db_scripts = [p for p in scripts if _script_contains_create_db(p)]
-            if db_scripts:
-                _log(log, f"🔁 Aplicando tokens literales en {len(db_scripts)} script(s) con CREATE DATABASE. Claves: {', '.join(tokens.keys())}")
-                for s in db_scripts:
-                    reemplazar_en_archivo(s, tokens, log)
+        # Histórico: si la DB ya existe, asegurar tabla y leer hashes
+        try:
+            if _db_exists(sql_server, admin_user, admin_pass, windows_auth, db_name):
+                _ensure_history_table(sql_server, admin_user, admin_pass, windows_auth, db_name, log)
+                applied_hashes = _get_applied_hashes(sql_server, admin_user, admin_pass, windows_auth, db_name)
             else:
-                _log(log, "⏭️  Tokens definidos pero NO aplicados: no hay scripts con 'CREATE DATABASE'.")
-
-        # Regex para sanitización "matching"
-        match_re = None
-        if sanitize_scope == 'matching' and sanitize_level != 'none':
-            try:
-                match_re = re.compile(sanitize_match, re.IGNORECASE)
-            except Exception:
-                match_re = None
+                applied_hashes = set()
+        except Exception as _e:
+            _log(log, f"⚠️ No se pudo inicializar histórico en '{db_name}': {_e}")
+            applied_hashes = set()
 
         total_ok = 0
         users_provisioned = False
@@ -592,64 +716,105 @@ def run_backend_installation(form, files=None) -> Dict[str, str]:
         for idx, s in enumerate(scripts, 1):
             _log(log, f"▶ Ejecutando [{idx}/{len(scripts)}] {s.name} …")
 
-            # 0) SANITIZACIÓN selectiva
+            # ¿Se sanitiza este archivo?
             do_sanitize = False
-            if sanitize_level == 'none' or sanitize_scope == 'none':
-                do_sanitize = False
-            elif sanitize_scope == 'all':
-                do_sanitize = True
-            elif sanitize_scope == 'matching':
-                do_sanitize = bool(match_re and match_re.search(s.name))
+            if sanitize_level != 'none' and sanitize_scope != 'none':
+                if sanitize_scope == 'all':
+                    do_sanitize = True
+                elif sanitize_scope == 'matching':
+                    try:
+                        match_re = re.compile(sanitize_match, re.IGNORECASE)
+                    except Exception:
+                        match_re = None
+                    do_sanitize = bool(match_re and match_re.search(s.name))
 
-            if do_sanitize:
-                sanitize_sql_file(s, log, level=sanitize_level, report_non_ascii=sanitize_report)
-            else:
-                _log(log, f"🧪 {s.name}: sanitización omitida (scope={sanitize_scope}, level={sanitize_level})")
+            # Prepara copia staged y contenido final (aplica tokens en staged)
+            staged_path, final_text = _prepare_script_text_for_exec(
+                s, db_name,
+                do_sanitize, sanitize_level, sanitize_report,
+                users, mdf_dir, ldf_dir, log,
+                tokens=tokens
+            )
 
-            # 0.5) Personalizar usuarios (si aplica)
-            if users:
-                _customize_users_in_file(s, users, log)
+            # Hash del contenido FINAL (lo que se ejecutará)
+            h = _sha256_text(final_text)
+            if applied_hashes and h in applied_hashes:
+                _log(log, f"✓ {s.name}: SKIP (ya aplicado por hash)")
+                try: shutil.rmtree(staged_path.parent, ignore_errors=True)
+                except Exception: pass
+                continue
 
-            # 1) Reemplazo [DB]
-            replace_db_brackets_in_file(s, db_name, log)
-
-            # 1.5) Reescribir MDF/LDF
-            _rewrite_file_paths_in_file(s, db_name, mdf_dir, ldf_dir, log)
-
-            # 2) Elegir DB de conexión
-            connect_db = db_name
+            # Elegir DB de conexión respetando USE [db] del script
+            use_db = _detect_use_db(final_text)
+            creates_db = bool(CREATE_DB_RE.search(final_text))
             try:
-                creates_db = _script_contains_create_db(s)
                 exists = _db_exists(sql_server, admin_user, admin_pass, windows_auth, db_name)
-                if creates_db or not exists:
-                    connect_db = "master"
-                    _log(log, f"ℹ️ {s.name}: conectando a master (creates_db={creates_db}, exists={exists})")
-                else:
-                    _log(log, f"ℹ️ {s.name}: conectando a {db_name} (exists={exists})")
-                    if users and not users_provisioned:
-                        _log(log, f"▶ Preprovisión de logins/usuarios en '{db_name}' (una sola vez)")
-                        _preprovision_users(sql_server, admin_user, admin_pass, windows_auth, db_name, users, log)
-                        users_provisioned = True
             except Exception as e:
-                connect_db = "master"
-                _log(log, f"⚠️ No se pudo verificar existencia de BD: {e}. Usando master para {s.name}.")
+                exists = False
+                _log(log, f"⚠️ No se pudo verificar BD '{db_name}': {e}")
 
-            # 3) Ejecutar script
-            code, out, err = _sqlcmd(sql_server, admin_user, admin_pass, connect_db, s, windows_auth)
-            if out: _log(log, f"STDOUT:\n{out}")
-            if err: _log(log, f"STDERR:\n{err}")
-            if code != 0:
-                _log(log, f"❌ Error en {s.name} (exit={code}). Abortando.")
-                raise RuntimeError(f"Error ejecutando {s.name} (exit={code}).")
-            _log(log, f"✅ OK {s.name}")
-            total_ok += 1
+            connect_db = use_db or ("master" if (creates_db or not exists) else db_name)
+            _log(log, f"ℹ️ {s.name}: conectando a {connect_db} (use_db={use_db or '-'}, creates_db={creates_db}, db_exists={exists})")
 
-            # Preprovisión post-CREATE DATABASE (si aplica)
-            if users and not users_provisioned and _script_contains_create_db(s):
-                if _db_exists(sql_server, admin_user, admin_pass, windows_auth, db_name):
-                    _log(log, f"▶ Preprovisión posterior a CREATE DATABASE en '{db_name}'")
-                    _preprovision_users(sql_server, admin_user, admin_pass, windows_auth, db_name, users, log)
-                    users_provisioned = True
+            # Pre-provisión de usuarios SOLO cuando conectamos a la DB destino
+            if users and not users_provisioned and connect_db.lower() == db_name.lower():
+                _log(log, f"▶ Preprovisión de logins/usuarios en '{db_name}'")
+                _preprovision_users(sql_server, admin_user, admin_pass, windows_auth, db_name, users, log)
+                users_provisioned = True
+
+            # Dry-run
+            if dry_run:
+                _log(log, f"👀 [dry-run] {s.name}: NO ejecutado. Hash={h}")
+                try: shutil.rmtree(staged_path.parent, ignore_errors=True)
+                except Exception: pass
+                continue
+
+            # Wrapper de sesión (ANSI_WARNINGS/TRACEON etc.)
+            wrapped = _make_session_wrapped_file(staged_path, verbose=True)
+
+            # Ejecutar con reintentos + timeout
+            start = time.time()
+            attempt = 0
+            last_err = None
+            while attempt <= retries:
+                attempt += 1
+                code, out, err = _sqlcmd(sql_server, admin_user, admin_pass, connect_db, wrapped, windows_auth, sql_timeout)
+                if out: _log(log, f"STDOUT:\n{out}")
+                if err: _log(log, f"STDERR:\n{err}")
+                if code == 0:
+                    dur = int((time.time() - start) * 1000)
+                    # Asegurar tabla de histórico si recién se creó la DB
+                    try:
+                        _ensure_history_table(sql_server, admin_user, admin_pass, windows_auth, db_name, log)
+                    except Exception as _e:
+                        _log(log, f"⚠️ No pude asegurar histórico post-ejecución: {_e}")
+                    _insert_history(sql_server, admin_user, admin_pass, windows_auth, db_name, s.name, h, dur, True, None)
+                    _log(log, f"✅ OK {s.name} ({dur} ms)")
+                    total_ok += 1
+                    break
+                last_err = err or out or f"exit={code}"
+                _log(log, f"⚠️ Intento {attempt} falló en {s.name}: {last_err}")
+                time.sleep(1)
+
+            # Limpieza staging/wrapper
+            try:
+                shutil.rmtree(staged_path.parent, ignore_errors=True)
+            except Exception:
+                pass
+            try:
+                shutil.rmtree(wrapped.parent, ignore_errors=True)
+            except Exception:
+                pass
+
+            if attempt > retries and last_err:
+                dur = int((time.time() - start) * 1000)
+                try:
+                    _ensure_history_table(sql_server, admin_user, admin_pass, windows_auth, db_name, log)
+                except Exception:
+                    pass
+                _insert_history(sql_server, admin_user, admin_pass, windows_auth, db_name, s.name, h, dur, False, last_err[:1900])
+                _log(log, f"❌ Error en {s.name}. Abortando.")
+                raise RuntimeError(f"Error ejecutando {s.name}: {last_err}")
 
         # .BAT opcional
         if target_path:
@@ -671,7 +836,7 @@ def run_backend_installation(form, files=None) -> Dict[str, str]:
 
     finally:
         try:
-            if staged_dir and staged_dir.exists():
-                shutil.rmtree(staged_dir, ignore_errors=True)
+            if staged_dir_for_uploads and staged_dir_for_uploads.exists():
+                shutil.rmtree(staged_dir_for_uploads, ignore_errors=True)
         except Exception:
             pass
