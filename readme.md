@@ -44,7 +44,7 @@
 <td>
   <img src="https://geps.dev/progress/100" alt="100%" />
 </td>
-<td>🟡 Completado</td>
+<td>✔ Completado</td>
 <td>Q1 2025</td>
 </tr>
 <tr>
@@ -82,6 +82,8 @@
 </tbody>
 </table>
 
+
+```
 ```
 
 ### Próximamente
