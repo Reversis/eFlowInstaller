@@ -2,7 +2,7 @@
 
 <div align="center">
   
-  ![Version](https://img.shields.io/badge/version-v0.1.8--alpha-blue?style=for-the-badge&logo=semantic-release)
+  ![Version](https://img.shields.io/badge/version-v0.2.0--alpha-blue?style=for-the-badge&logo=semantic-release)
   ![Status](https://img.shields.io/badge/status-En%20Desarrollo-orange?style=for-the-badge&logo=github-actions)
   ![License](https://img.shields.io/badge/license-MIT-green?style=for-the-badge&logo=open-source-initiative)
   
@@ -42,9 +42,9 @@
 <tr>
 <td><strong>🔧 Instalador Backend</strong></td>
 <td>
-  <img src="https://geps.dev/progress/80" alt="80%" />
+  <img src="https://geps.dev/progress/100" alt="100%" />
 </td>
-<td>🟡 En desarrollo activo</td>
+<td>🟡 Completado</td>
 <td>Q1 2025</td>
 </tr>
 <tr>
@@ -52,7 +52,7 @@
 <td>
   <img src="https://geps.dev/progress/0" alt="0%" />
 </td>
-<td>⚪ No iniciado</td>
+<td>Empezando Desarrollo</td>
 <td>Q2 2025</td>
 </tr>
 <tr>
@@ -82,33 +82,6 @@
 </tbody>
 </table>
 
----
-
-## 🚀 Instalación Rápida
-
-```bash
-# Clonar el repositorio
-git clone https://github.com/tu-usuario/eFlowInstaller.git
-
-# Navegar al directorio
-cd eFlowInstaller
-
-# Ejecutar instalador (requiere permisos de administrador)
-./install.sh
-```
-
----
-
-## 📖 Uso
-
-### Instalación Backend (Disponible)
-
-```bash
-# Ejecutar módulo backend
-./eflow-installer --module=backend
-
-# Con configuración personalizada
-./eflow-installer --module=backend --config=custom.json
 ```
 
 ### Próximamente
@@ -126,18 +99,6 @@ cd eFlowInstaller
 - **Espacio**: 50GB libres en disco
 - **Red**: Conectividad a internet para descargas
 - **Permisos**: Acceso administrativo
-
----
-
-## 🤝 Contribuir
-
-¡Las contribuciones son bienvenidas! Por favor:
-
-1. 🍴 Fork el proyecto
-2. 🌿 Crea tu rama de característica (`git checkout -b feature/AmazingFeature`)
-3. 💾 Commit tus cambios (`git commit -m 'Add some AmazingFeature'`)
-4. 📤 Push a la rama (`git push origin feature/AmazingFeature`)
-5. 🔄 Abre un Pull Request
 
 ---
 
